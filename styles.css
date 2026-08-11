@@ -104,6 +104,10 @@ a.partner-card:hover { transform: translateY(-4px); box-shadow: 0 18px 40px rgba
 .sponsor { padding: 92px clamp(22px, 7vw, 108px); background: var(--orange); color: white; display: grid; grid-template-columns: .95fr 1.05fr; gap: clamp(45px, 8vw, 120px); }
 .sponsor .section-kicker { color: #fff3e7; }
 .sponsor-copy > p { margin: 0 0 22px; font-size: 18px; line-height: 1.65; color: #fff7f1; }
+.partnership-brief { margin: 0 0 24px; padding: 18px 0; border-top: 1px solid rgba(255,255,255,.35); color: #fff; }
+.partnership-brief strong { display: block; margin-bottom: 10px; font-size: 14px; text-transform: uppercase; letter-spacing: .08em; }
+.partnership-brief ul { margin: 0; padding-left: 20px; color: #fff7f1; line-height: 1.6; }
+.partnership-brief small { display: block; margin-top: 10px; color: #fff3e7; line-height: 1.5; }
 .sponsor .promise { border-top: 1px solid rgba(255,255,255,.35); border-bottom: 1px solid rgba(255,255,255,.35); padding: 19px 0; font-size: 15px; }
 .promise span { display: inline-flex; width: 24px; height: 24px; margin-right: 8px; border-radius: 50%; align-items: center; justify-content: center; background: white; color: var(--orange); font-weight: 900; }
 .button.white { background: white; color: var(--orange); }
