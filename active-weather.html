@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Active severe-weather information, regional radar and live field coverage from Storm Chaser Larry Morrell.">
+  <title>Active Weather | Storm Chaser Larry Morrell</title>
+  <link rel="icon" href="assets/logo.webp">
+  <link rel="stylesheet" href="styles.css?v=5">
+  <link rel="stylesheet" href="assets/vendor/leaflet/leaflet.css">
+  <style>
+    :root { --wx-red:#ef3f32; --wx-gold:#ffb000; --wx-green:#32c46c; --wx-panel:#0b202b; }
+    body { background:#06141c; color:#f7fbfc; }
+    .active-header { position:relative; background:rgba(6,20,28,.96); border-bottom:1px solid rgba(255,255,255,.12); }
+    .active-header nav { display:flex; align-items:center; gap:22px; }
+    .active-header nav a { color:#d9e7eb; }
+    .active-header .nav-cta { background:var(--orange); color:#fff; }
+    .active-main { min-height:100vh; padding:132px clamp(18px,4vw,64px) 56px; background:radial-gradient(circle at 75% 0%,rgba(0,170,220,.16),transparent 38%),#06141c; }
+    .active-intro { display:flex; justify-content:space-between; gap:30px; align-items:end; margin:0 auto 24px; max-width:1500px; }
+    .active-intro .section-kicker { color:#5ed4ff; }
+    .active-intro h1 { margin:8px 0 0; max-width:850px; font-size:clamp(38px,5vw,72px); line-height:.96; letter-spacing:-.055em; }
+    .active-intro p:last-child { max-width:560px; margin:0; color:#b8cbd1; font-size:15px; line-height:1.65; }
+    .status-strip { max-width:1500px; margin:0 auto 18px; display:grid; grid-template-columns:1.2fr 1fr 1fr; border:1px solid rgba(255,255,255,.14); background:rgba(11,32,43,.9); }
+    .status-card { min-height:74px; padding:15px 18px; display:flex; align-items:center; gap:13px; border-right:1px solid rgba(255,255,255,.12); }
+    .status-card:last-child { border-right:0; }
+    .status-dot { width:12px; height:12px; flex:0 0 12px; border-radius:50%; background:#82959c; box-shadow:0 0 0 5px rgba(130,149,156,.12); }
+    .status-dot.online { background:var(--wx-green); box-shadow:0 0 0 5px rgba(50,196,108,.15),0 0 18px rgba(50,196,108,.5); }
+    .status-card div { display:flex; flex-direction:column; gap:3px; }
+    .status-card strong { font-size:13px; letter-spacing:.055em; text-transform:uppercase; }
+    .status-card span { color:#a9bec5; font-size:12px; }
+    .radar-shell { position:relative; max-width:1500px; height:min(72vh,820px); min-height:570px; margin:0 auto; overflow:hidden; border:1px solid rgba(255,255,255,.18); border-radius:18px; background:#152c37; box-shadow:0 28px 80px rgba(0,0,0,.4); }
+    #regional-radar { width:100%; height:100%; background:#152c37; }
+    .leaflet-container { font:inherit; }
+    .leaflet-control-attribution { background:rgba(6,20,28,.78)!important; color:#c8d8dd; }
+    .leaflet-control-attribution a { color:#72d9ff; }
+    .radar-controls { position:absolute; z-index:1000; left:18px; right:18px; bottom:18px; display:grid; grid-template-columns:auto minmax(140px,1fr) auto; gap:12px; align-items:center; padding:12px 14px; border:1px solid rgba(255,255,255,.18); border-radius:12px; background:rgba(6,20,28,.9); backdrop-filter:blur(10px); }
+    .radar-controls button,.radar-controls select { min-height:40px; border:1px solid rgba(255,255,255,.2); border-radius:8px; background:#12313e; color:#fff; font-weight:800; cursor:pointer; }
+    .radar-controls button { padding:0 15px; }
+    .radar-controls input[type="range"] { width:100%; accent-color:#f36c2d; }
+    .time-readout { min-width:145px; color:#d9e7eb; font-size:12px; font-weight:800; text-align:right; }
+    .layer-panel { position:absolute; z-index:1000; top:18px; right:18px; width:210px; padding:14px; border:1px solid rgba(255,255,255,.18); border-radius:12px; background:rgba(6,20,28,.9); backdrop-filter:blur(10px); }
+    .layer-panel strong { display:block; margin-bottom:10px; font-size:11px; color:#72d9ff; letter-spacing:.12em; text-transform:uppercase; }
+    .layer-panel label { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:9px; color:#e8f1f3; font-size:13px; }
+    .layer-panel input { accent-color:#f36c2d; }
+    .radar-loading { position:absolute; z-index:999; inset:0; display:grid; place-items:center; pointer-events:none; color:#e7f2f5; font-weight:800; background:linear-gradient(135deg,rgba(6,20,28,.35),rgba(6,20,28,.05)); }
+    .radar-loading.hidden { display:none; }
+    .warning-legend { position:absolute; z-index:1000; left:18px; top:18px; display:flex; flex-wrap:wrap; gap:8px; max-width:480px; }
+    .warning-legend span { padding:7px 9px; border-radius:7px; background:rgba(6,20,28,.86); font-size:10px; font-weight:900; letter-spacing:.06em; text-transform:uppercase; }
+    .warning-legend .tor { border-left:4px solid #ff1717; }.warning-legend .svr { border-left:4px solid #ffd400; }.warning-legend .ffw { border-left:4px solid #1bd34f; }
+    .county-label { color:#fff; font-size:10px; font-weight:900; letter-spacing:.01em; text-align:center; text-shadow:-1px -1px 0 #10232c,1px -1px 0 #10232c,-1px 1px 0 #10232c,1px 1px 0 #10232c,0 0 4px #10232c; white-space:nowrap; }
+    .active-disclaimer { max-width:1500px; margin:18px auto 0; padding:18px 20px; display:flex; gap:12px; align-items:flex-start; border-left:4px solid var(--orange); background:#0b202b; color:#bdcdd2; font-size:13px; line-height:1.55; }
+    .active-disclaimer strong { color:#fff; white-space:nowrap; }
+    .weather-content { max-width:1500px; margin:26px auto 0; }
+    .weather-heading { display:flex; justify-content:space-between; gap:24px; align-items:end; margin-bottom:16px; }
+    .weather-heading .section-kicker { color:#5ed4ff; }
+    .weather-heading h2 { margin:5px 0 0; font-size:clamp(28px,3vw,46px); line-height:1; letter-spacing:-.04em; }
+    .weather-heading p:last-child { max-width:560px; margin:0; color:#a9bec5; font-size:13px; line-height:1.55; }
+    .regional-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+    .weather-panel { overflow:hidden; border:1px solid rgba(255,255,255,.15); border-radius:16px; background:#0b202b; }
+    .weather-panel-head { display:flex; justify-content:space-between; gap:14px; align-items:center; padding:18px 20px; border-bottom:1px solid rgba(255,255,255,.11); }
+    .weather-panel-head h3 { margin:0; font-size:18px; }
+    .official-link { color:#72d9ff; font-size:11px; font-weight:900; letter-spacing:.07em; text-transform:uppercase; }
+    .outlook-preview { display:grid; grid-template-columns:minmax(0,1.25fr) minmax(190px,.75fr); min-height:340px; }
+    .outlook-preview figure { min-height:340px; margin:0; display:grid; place-items:center; background:#eef2f3; }
+    .outlook-preview img { display:block; width:100%; height:100%; object-fit:contain; }
+    .regional-outlook-map-wrap { position:relative; width:100%; height:100%; min-height:340px; }
+    #regional-outlook-map { width:100%; height:100%; min-height:340px; background:#edf1f2; }
+    .outlook-map-legend { position:absolute; z-index:700; left:8px; right:8px; bottom:8px; display:flex; flex-wrap:wrap; gap:4px; padding:6px; border-radius:7px; background:rgba(6,20,28,.88); }
+    .outlook-map-legend span { display:flex; align-items:center; gap:4px; color:#fff; font-size:8px; font-weight:900; }
+    .outlook-map-legend i { width:10px; height:10px; border:1px solid rgba(255,255,255,.7); }
+    .outlook-copy { padding:24px; }
+    .outlook-copy strong { display:block; margin-bottom:9px; color:#fff; font-size:18px; }
+    .outlook-copy p { margin:0; color:#b8cbd1; font-size:13px; line-height:1.6; }
+    .outlook-links { display:flex; flex-wrap:wrap; gap:8px; margin-top:18px; }
+    .outlook-links a { padding:9px 11px; border:1px solid rgba(255,255,255,.18); border-radius:8px; color:#fff; font-size:11px; font-weight:900; text-transform:uppercase; }
+    .mcd-list { min-height:340px; padding:18px; display:grid; gap:10px; align-content:start; }
+    .mcd-card { padding:15px 16px; border-left:4px solid #5ed4ff; background:#102c38; }
+    .mcd-card strong { display:block; color:#fff; font-size:14px; }
+    .mcd-card p { margin:6px 0 9px; color:#b8cbd1; font-size:12px; line-height:1.5; }
+    .mcd-card a { color:#72d9ff; font-size:10px; font-weight:900; letter-spacing:.06em; text-transform:uppercase; }
+    .empty-state { min-height:280px; display:grid; place-items:center; padding:30px; color:#a9bec5; text-align:center; line-height:1.6; }
+    .national-panel { display:grid; grid-template-columns:minmax(0,1.35fr) minmax(280px,.65fr); }
+    .national-image { min-height:440px; display:grid; place-items:center; padding:12px; background:#eef2f3; }
+    .national-image img { display:block; width:100%; max-height:620px; object-fit:contain; }
+    .national-copy { padding:clamp(24px,4vw,48px); align-self:center; }
+    .national-copy h3 { margin:0 0 12px; font-size:clamp(25px,3vw,40px); line-height:1.05; }
+    .national-copy p { color:#b8cbd1; font-size:14px; line-height:1.65; }
+    .national-copy .nav-cta { display:inline-flex; margin-top:12px; padding:13px 17px; background:var(--orange); color:#fff; font-size:11px; font-weight:900; letter-spacing:.07em; text-transform:uppercase; }
+    .source-note { margin:12px 0 0; color:#80969d; font-size:11px; }
+    .chase-marker { width:24px!important; height:24px!important; border:3px solid white; border-radius:50%; background:#f36c2d; box-shadow:0 0 0 7px rgba(243,108,45,.25),0 3px 12px rgba(0,0,0,.45); }
+    @media(max-width:800px){
+      .active-main{padding-top:104px}.active-intro,.weather-heading{align-items:flex-start;flex-direction:column}.status-strip,.regional-grid{grid-template-columns:1fr}.status-card{border-right:0;border-bottom:1px solid rgba(255,255,255,.12)}.status-card:last-child{border-bottom:0}.radar-shell{height:72vh;min-height:540px}.layer-panel{top:12px;right:12px;width:180px}.warning-legend{left:12px;right:205px;top:12px}.radar-controls{left:12px;right:12px;bottom:12px;grid-template-columns:auto 1fr}.time-readout{grid-column:1/-1;text-align:center}.active-disclaimer{flex-direction:column}.active-disclaimer strong{white-space:normal}.outlook-preview,.national-panel{grid-template-columns:1fr}.outlook-preview figure{min-height:280px}.national-image{min-height:300px}
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header active-header">
+    <a class="brand" href="index.html" aria-label="Storm Chaser Larry Morrell home"><img src="assets/logo.webp" alt="Storm Chasing EMT logo"><span><strong>Storm Chaser</strong><small>Larry Morrell</small></span></a>
+    <nav aria-label="Main navigation"><a href="index.html">Home</a><a href="index.html#area">Coverage Area</a><a class="nav-cta" href="active-weather.html" aria-current="page">Active Weather</a></nav>
+  </header>
+  <main class="active-main">
+    <section class="active-intro">
+      <div><p class="section-kicker">Regional situational awareness</p><h1>Active weather.<br>Clear regional context.</h1></div>
+      <p>Regional reflectivity, official warning polygons and live field position when ChaseLink is active. This page is informational and never replaces official warning sources.</p>
+    </section>
+    <section class="status-strip" aria-label="Current service status">
+      <article class="status-card"><i class="status-dot online" aria-hidden="true"></i><div><strong>Radar feed</strong><span id="radar-status">Connecting to regional reflectivity…</span></div></article>
+      <article class="status-card"><i class="status-dot" id="alert-dot" aria-hidden="true"></i><div><strong>Official alerts</strong><span id="alert-status">Checking active NWS warnings…</span></div></article>
+      <article class="status-card"><i class="status-dot" id="chase-dot" aria-hidden="true"></i><div><strong>Larry’s field status</strong><span id="chase-status">Not currently providing live field coverage</span></div></article>
+    </section>
+    <section class="radar-shell" aria-label="Interactive regional weather radar">
+      <div id="regional-radar"></div>
+      <div class="radar-loading" id="radar-loading">Loading regional radar…</div>
+      <div class="warning-legend" aria-label="Warning polygon colors"><span class="tor">Tornado warning</span><span class="svr">Severe warning</span><span class="ffw">Flash flood warning</span></div>
+      <aside class="layer-panel" aria-label="Map layers"><strong>Map layers</strong><label>Reflectivity <input type="checkbox" id="radar-toggle" checked></label><label>County lines <input type="checkbox" id="counties-toggle" checked></label><label>Warnings <input type="checkbox" id="warnings-toggle" checked></label><label>Larry’s location <input type="checkbox" id="location-toggle" checked></label><label>Follow Larry <input type="checkbox" id="follow-toggle" checked></label><label>Radar opacity <input type="range" id="opacity" min="20" max="100" value="72"></label></aside>
+      <div class="radar-controls"><button type="button" id="play-pause" aria-label="Pause radar animation">Pause</button><input type="range" id="timeline" min="0" max="0" value="0" aria-label="Radar frame timeline"><span class="time-readout" id="frame-time">Waiting for radar…</span></div>
+    </section>
+    <section class="weather-content" aria-labelledby="regional-guidance-title">
+      <div class="weather-heading"><div><p class="section-kicker">Official regional guidance</p><h2 id="regional-guidance-title">Outlooks &amp; discussions</h2></div><p>SPC outlooks describe the broader severe-weather potential. Mesoscale discussions provide shorter-term context when conditions are becoming more focused.</p></div>
+      <div class="regional-grid">
+        <article class="weather-panel">
+          <div class="weather-panel-head"><h3>Regional outlooks</h3><a class="official-link" href="https://www.spc.noaa.gov/products/outlook/" target="_blank" rel="noreferrer">SPC outlooks ↗</a></div>
+          <div class="outlook-preview">
+            <figure><div class="regional-outlook-map-wrap"><div id="regional-outlook-map" aria-label="Current Day 1 SPC outlook over regional county map"></div><div class="outlook-map-legend" aria-label="SPC outlook categories"><span><i style="background:#c1e9c1"></i>TSTM</span><span><i style="background:#66a366"></i>MRGL</span><span><i style="background:#ffe066"></i>SLGT</span><span><i style="background:#ffa366"></i>ENH</span><span><i style="background:#e06666"></i>MDT</span><span><i style="background:#ff66ff"></i>HIGH</span></div></div></figure>
+            <div class="outlook-copy"><strong>South Georgia and nearby region</strong><p>Use the official outlook to see whether organized severe weather is forecast within South Georgia, North Florida or Southeast Alabama. Outlook categories are not warnings.</p><div class="outlook-links"><a href="https://www.spc.noaa.gov/products/outlook/day1otlk.html" target="_blank" rel="noreferrer">Day 1</a><a href="https://www.spc.noaa.gov/products/outlook/day2otlk.html" target="_blank" rel="noreferrer">Day 2</a><a href="https://www.spc.noaa.gov/products/outlook/day3otlk.html" target="_blank" rel="noreferrer">Day 3</a></div></div>
+          </div>
+        </article>
+        <article class="weather-panel">
+          <div class="weather-panel-head"><h3>Regional mesoscale discussions</h3><a class="official-link" href="https://www.spc.noaa.gov/products/md/" target="_blank" rel="noreferrer">All SPC MCDs ↗</a></div>
+          <div class="mcd-list" id="regional-mcds"><div class="empty-state">Checking for active mesoscale discussions affecting Georgia, Florida or Alabama…</div></div>
+        </article>
+      </div>
+      <p class="source-note">Official products provided by the NOAA/NWS Storm Prediction Center. Always open the full product for complete details and valid times.</p>
+    </section>
+    <aside class="active-disclaimer"><strong>Official warnings come first.</strong><span>Use multiple reliable information sources and follow National Weather Service warnings, local emergency officials and emergency notifications. Radar imagery and ChaseLink position data may be delayed or temporarily unavailable.</span></aside>
+    <section class="weather-content" aria-labelledby="national-outlook-title">
+      <div class="weather-heading"><div><p class="section-kicker">The national picture</p><h2 id="national-outlook-title">National severe weather outlook</h2></div><p>A simple nationwide view of the current Day 1 severe-thunderstorm outlook from the Storm Prediction Center.</p></div>
+      <article class="weather-panel national-panel">
+        <div class="national-image"><img id="national-outlook-image" src="https://www.spc.noaa.gov/products/outlook/day1otlk.png" onerror="this.onerror=null;this.src='assets/weather/day1otlk.png'" alt="Current national SPC Day 1 convective outlook"></div>
+        <div class="national-copy"><h3>Today’s SPC overview</h3><p>This map shows where organized severe thunderstorms may occur across the contiguous United States. It provides forecast context—not a storm track and not a warning.</p><a class="nav-cta" href="https://www.spc.noaa.gov/" target="_blank" rel="noreferrer">Open the official SPC page ↗</a></div>
+      </article>
+    </section>
+  </main>
+  <script src="assets/vendor/leaflet/leaflet.js"></script>
+  <script>
+    const REGION_BOUNDS = L.latLngBounds([28.85,-86.15],[33.15,-80.55]);
+    const CHASELINK_FEED_URL = ""; // Added when the secure ChaseLink bridge is ready.
+    const COUNTY_QUERY_URL = "https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/State_County/MapServer/1/query";
+    async function fetchJsonWithFallback(url,fallback,cache="no-store"){
+      try{
+        const response=await fetch(url,{cache,signal:AbortSignal.timeout(5500)});
+        if(!response.ok)throw new Error(`Feed returned ${response.status}`);
+        return response.json();
+      }catch(error){
+        const fallbackResponse=await fetch(fallback,{cache:"no-store"});
+        if(!fallbackResponse.ok)throw error;
+        return fallbackResponse.json();
+      }
+    }
+    const map = L.map("regional-radar",{minZoom:5,maxZoom:10,zoomControl:true,maxBounds:L.latLngBounds([26,-89],[36,-77]).pad(.15)});
+    map.fitBounds(REGION_BOUNDS,{padding:[15,15]});
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'}).addTo(map);
+
+    map.createPane("countiesPane");map.getPane("countiesPane").style.zIndex=410;map.getPane("countiesPane").style.pointerEvents="none";
+    map.createPane("countyLabelsPane");map.getPane("countyLabelsPane").style.zIndex=430;map.getPane("countyLabelsPane").style.pointerEvents="none";
+    const radarGroup = L.layerGroup().addTo(map), countyGroup = L.layerGroup().addTo(map), warningGroup = L.layerGroup().addTo(map), locationGroup = L.layerGroup().addTo(map);
+    const loading = document.getElementById("radar-loading"), timeline = document.getElementById("timeline"), frameTime = document.getElementById("frame-time");
+    const radarStatus = document.getElementById("radar-status"), alertStatus = document.getElementById("alert-status"), alertDot = document.getElementById("alert-dot");
+    const chaseStatus = document.getElementById("chase-status"), chaseDot = document.getElementById("chase-dot");
+    let radarFrames=[], radarLayer=null, frameIndex=0, playing=true, animationTimer=null;
+
+    function showRadarFrame(index){
+      if(!radarFrames.length)return;
+      frameIndex=(index+radarFrames.length)%radarFrames.length;
+      const frame=radarFrames[frameIndex];
+      if(radarLayer) radarGroup.removeLayer(radarLayer);
+      radarLayer=L.tileLayer(`${frame.host}${frame.path}/256/{z}/{x}/{y}/2/1_1.png`,{tileSize:256,maxNativeZoom:7,maxZoom:10,opacity:Number(document.getElementById("opacity").value)/100,attribution:'Radar: <a href="https://www.rainviewer.com/">RainViewer</a>'});
+      radarLayer.addTo(radarGroup); timeline.value=String(frameIndex);
+      frameTime.textContent=new Date(frame.time*1000).toLocaleString([],{weekday:"short",hour:"numeric",minute:"2-digit"});
+    }
+    function startAnimation(){clearInterval(animationTimer);animationTimer=setInterval(()=>showRadarFrame(frameIndex+1),850);}
+    async function loadRadar(){
+      try{
+        const response=await fetch("https://api.rainviewer.com/public/weather-maps.json",{cache:"no-store"});
+        if(!response.ok)throw new Error("Radar feed unavailable");
+        const data=await response.json(); radarFrames=(data.radar?.past||[]).slice(-6).map(frame=>({...frame,host:data.host}));
+        timeline.max=String(Math.max(0,radarFrames.length-1)); showRadarFrame(radarFrames.length-1); loading.classList.add("hidden");
+        radarStatus.textContent=`Regional reflectivity active • ${radarFrames.length} recent frames`; if(playing)startAnimation();
+      }catch(error){loading.textContent="Regional radar is temporarily unavailable";radarStatus.textContent="Radar feed temporarily unavailable";}
+    }
+    function warningStyle(event){
+      if(event==="Tornado Warning")return{color:"#ff1717",weight:4,fillColor:"#ff1717",fillOpacity:.08};
+      if(event==="Severe Thunderstorm Warning")return{color:"#ffd400",weight:4,fillColor:"#ffd400",fillOpacity:.08};
+      return{color:"#1bd34f",weight:4,fillColor:"#1bd34f",fillOpacity:.08};
+    }
+    async function loadWarnings(){
+      const wanted=new Set(["Tornado Warning","Severe Thunderstorm Warning","Flash Flood Warning"]); warningGroup.clearLayers();
+      try{
+        const responses=await Promise.all(["GA","FL","AL"].map(area=>fetch(`https://api.weather.gov/alerts/active?area=${area}`,{headers:{Accept:"application/geo+json"},cache:"no-store"})));
+        const collections=await Promise.all(responses.map(r=>{if(!r.ok)throw new Error("Alert feed unavailable");return r.json()}));
+        const seen=new Set(); let count=0;
+        collections.flatMap(c=>c.features||[]).forEach(feature=>{
+          if(seen.has(feature.id)||!wanted.has(feature.properties?.event)||!feature.geometry)return; seen.add(feature.id);
+          const layer=L.geoJSON(feature,{style:warningStyle(feature.properties.event),onEachFeature:(_,item)=>item.bindPopup(`<strong>${feature.properties.headline||feature.properties.event}</strong><br>${feature.properties.areaDesc||""}<br><a href="${feature.id}" target="_blank" rel="noreferrer">Official NWS alert</a>`)});
+          if(layer.getBounds().isValid()&&REGION_BOUNDS.intersects(layer.getBounds())){layer.addTo(warningGroup);count++;}
+        });
+        alertStatus.textContent=count?`${count} active regional warning${count===1?"":"s"}`:"No active tornado, severe or flash-flood warnings"; alertDot.classList.toggle("online",count>0);
+      }catch(error){alertStatus.textContent="Official alert feed temporarily unavailable";alertDot.classList.remove("online");}
+    }
+    async function loadCounties(){
+      const query=new URLSearchParams({where:"1=1",geometry:"-86.15,28.85,-80.55,33.15",geometryType:"esriGeometryEnvelope",inSR:"4326",spatialRel:"esriSpatialRelIntersects",outFields:"BASENAME,NAME,STATE",returnGeometry:"true",outSR:"4326",f:"geojson"});
+      try{
+        const data=await fetchJsonWithFallback(`${COUNTY_QUERY_URL}?${query}`,"assets/data/regional-counties-simple.geojson","force-cache");countyGroup.clearLayers();
+        L.geoJSON(data,{pane:"countiesPane",style:{color:"rgba(255,255,255,.78)",weight:1.15,opacity:.9,fillOpacity:0},onEachFeature:(feature,layer)=>{
+          const name=feature.properties?.BASENAME||feature.properties?.NAME;if(name)layer.bindTooltip(`${name} County`,{sticky:true,direction:"top"});
+        }}).addTo(countyGroup);
+      }catch(error){console.warn("County boundaries could not load",error);}
+    }
+    async function loadRegionalOutlookMap(){
+      const outlookMap=L.map("regional-outlook-map",{zoomControl:true,attributionControl:false,minZoom:5,maxZoom:9,maxBounds:L.latLngBounds([27,-88],[35,-78])});
+      outlookMap.fitBounds(REGION_BOUNDS,{padding:[5,5]});
+      const query=new URLSearchParams({where:"1=1",geometry:"-86.15,28.85,-80.55,33.15",geometryType:"esriGeometryEnvelope",inSR:"4326",spatialRel:"esriSpatialRelIntersects",outFields:"BASENAME,NAME,STATE",returnGeometry:"true",outSR:"4326",f:"geojson"});
+      try{
+        const [counties,outlook]=await Promise.all([
+          fetchJsonWithFallback(`${COUNTY_QUERY_URL}?${query}`,"assets/data/regional-counties-simple.geojson","force-cache"),
+          fetchJsonWithFallback("https://www.spc.noaa.gov/products/outlook/day1otlk_cat.nolyr.geojson","assets/data/day1-outlook.geojson")
+        ]);
+        L.geoJSON(outlook,{style:feature=>({color:feature.properties?.stroke||"#52636b",weight:1.5,fillColor:feature.properties?.fill||"#c1e9c1",fillOpacity:.58}),onEachFeature:(feature,layer)=>layer.bindTooltip(feature.properties?.LABEL2||feature.properties?.LABEL||"SPC outlook")}).addTo(outlookMap);
+        L.geoJSON(counties,{style:{color:"#1c2b32",weight:1.1,opacity:.82,fillOpacity:0},onEachFeature:(feature,layer)=>{
+          const name=feature.properties?.BASENAME||feature.properties?.NAME;if(name)layer.bindTooltip(`${name} County`,{sticky:true,direction:"top"});
+        }}).addTo(outlookMap);
+      }catch(error){document.getElementById("regional-outlook-map").innerHTML='<div class="empty-state">Regional outlook map is temporarily unavailable.</div>';}
+      setTimeout(()=>outlookMap.invalidateSize(),100);
+    }
+    function mcdExcerpt(text){
+      const summary=text.match(/SUMMARY\.\.\.([\s\S]*?)(?:\n\s*DISCUSSION|\n\s*\.\.)/i)?.[1];
+      return summary?summary.replace(/\s+/g," ").trim():"Open the official discussion for complete details and timing.";
+    }
+    async function loadRegionalMCDs(){
+      const container=document.getElementById("regional-mcds");
+      try{
+        const listResponse=await fetch("https://api.weather.gov/products/types/SWOMCD",{headers:{Accept:"application/ld+json"},cache:"no-store"});
+        if(!listResponse.ok)throw new Error("MCD list unavailable");
+        const list=await listResponse.json();
+        const recent=(list["@graph"]||[]).slice(0,18);
+        const products=await Promise.all(recent.map(async item=>{
+          const response=await fetch(item["@id"],{headers:{Accept:"application/ld+json"},cache:"no-store"});
+          return response.ok?response.json():null;
+        }));
+        const now=Date.now();
+        const regional=products.filter(Boolean).filter(product=>{
+          const text=product.productText||"";
+          const issued=new Date(product.issuanceTime||0).getTime();
+          const regionalCodes=/(?:GA|FL|AL)Z\d{3}|(?:Georgia|Florida|Alabama)/i.test(text);
+          return regionalCodes&&now-issued<8*60*60*1000;
+        }).slice(0,4);
+        if(!regional.length){container.innerHTML='<div class="empty-state"><span><strong>No recent regional MCDs found.</strong><br>The panel will update automatically when SPC discussions affect Georgia, Florida or Alabama.</span></div>';return;}
+        container.innerHTML=regional.map(product=>{
+          const text=product.productText||"";
+          const number=text.match(/Mesoscale Discussion\s+(\d+)/i)?.[1]||"";
+          const area=text.match(/Areas affected\.\.\.([^\n]+)/i)?.[1]?.trim()||"Georgia, Florida or Alabama region";
+          return `<article class="mcd-card"><strong>Mesoscale Discussion ${number}</strong><p>${area}<br>${mcdExcerpt(text)}</p><a href="https://www.spc.noaa.gov/products/md/" target="_blank" rel="noreferrer">Open official SPC discussion ↗</a></article>`;
+        }).join("");
+      }catch(error){container.innerHTML='<div class="empty-state">The regional MCD feed is temporarily unavailable. Use the official SPC link above for current discussions.</div>';}
+    }
+    let chaseMarker=null;
+    async function loadChaseLink(){
+      if(!CHASELINK_FEED_URL){chaseStatus.textContent="ChaseLink bridge pending • not currently live";return;}
+      try{
+        const response=await fetch(`${CHASELINK_FEED_URL}?t=${Date.now()}`,{cache:"no-store"}); const data=await response.json();
+        const age=Date.now()-new Date(data.updatedAt).getTime(),active=data.active&&data.hasFix&&age<90000;
+        if(active){
+          const position=[data.latitude,data.longitude];
+          if(!chaseMarker){chaseMarker=L.marker(position,{icon:L.divIcon({className:"",html:'<div class="chase-marker"></div>',iconSize:[24,24],iconAnchor:[12,12]})}).addTo(locationGroup);}
+          else{chaseMarker.setLatLng(position);}
+          chaseMarker.bindPopup(`<strong>Storm Chaser Larry Morrell</strong><br>Live field coverage${Number.isFinite(data.speedMPH)?`<br>${Math.round(data.speedMPH)} mph`:""}`);
+          if(document.getElementById("follow-toggle").checked)map.panTo(position,{animate:true,duration:1});
+          chaseStatus.textContent="Live field coverage • ChaseLink active";chaseDot.classList.add("online");
+        }else{
+          if(chaseMarker){locationGroup.removeLayer(chaseMarker);chaseMarker=null;}
+          chaseStatus.textContent="Not currently providing live field coverage";chaseDot.classList.remove("online");
+        }
+      }catch(error){chaseStatus.textContent="ChaseLink offline • no live field position";chaseDot.classList.remove("online");}
+    }
+    document.getElementById("play-pause").addEventListener("click",event=>{playing=!playing;event.currentTarget.textContent=playing?"Pause":"Play";event.currentTarget.setAttribute("aria-label",playing?"Pause radar animation":"Play radar animation");playing?startAnimation():clearInterval(animationTimer)});
+    timeline.addEventListener("input",event=>showRadarFrame(Number(event.target.value)));
+    document.getElementById("opacity").addEventListener("input",event=>radarLayer?.setOpacity(Number(event.target.value)/100));
+    document.getElementById("radar-toggle").addEventListener("change",event=>event.target.checked?radarGroup.addTo(map):map.removeLayer(radarGroup));
+    document.getElementById("counties-toggle").addEventListener("change",event=>event.target.checked?countyGroup.addTo(map):map.removeLayer(countyGroup));
+    document.getElementById("warnings-toggle").addEventListener("change",event=>event.target.checked?warningGroup.addTo(map):map.removeLayer(warningGroup));
+    document.getElementById("location-toggle").addEventListener("change",event=>event.target.checked?locationGroup.addTo(map):map.removeLayer(locationGroup));
+    map.on("dragstart",()=>{document.getElementById("follow-toggle").checked=false;});
+    loadRadar();loadCounties();loadRegionalOutlookMap();loadWarnings();loadRegionalMCDs();loadChaseLink();setInterval(loadRadar,300000);setInterval(loadWarnings,60000);setInterval(loadRegionalMCDs,300000);setInterval(loadChaseLink,10000);
+  </script>
+</body>
+</html>
