@@ -239,7 +239,7 @@
     async function loadRegionalMCDs(){
       const container=document.getElementById("regional-mcds");
       try{
-        const listResponse=await fetch("https://api.weather.gov/products/types/SWOMCD",{headers:{Accept:"application/ld+json"},cache:"no-store"});
+        const listResponse=await fetch("https://api.weather.gov/products/types/SWO/locations/MCD",{headers:{Accept:"application/ld+json"},cache:"no-store"});
         if(!listResponse.ok)throw new Error("MCD list unavailable");
         const list=await listResponse.json();
         const recent=(list["@graph"]||[]).slice(0,18);
@@ -259,7 +259,8 @@
           const text=product.productText||"";
           const number=text.match(/Mesoscale Discussion\s+(\d+)/i)?.[1]||"";
           const area=text.match(/Areas affected\.\.\.([^\n]+)/i)?.[1]?.trim()||"Georgia, Florida or Alabama region";
-          return `<article class="mcd-card"><strong>Mesoscale Discussion ${number}</strong><p>${area}<br>${mcdExcerpt(text)}</p><a href="https://www.spc.noaa.gov/products/md/" target="_blank" rel="noreferrer">Open official SPC discussion ↗</a></article>`;
+          const productUrl=number?`https://www.spc.noaa.gov/products/md/md${number}.html`:"https://www.spc.noaa.gov/products/md/";
+          return `<article class="mcd-card"><strong>Mesoscale Discussion ${number}</strong><p>${area}<br>${mcdExcerpt(text)}</p><a href="${productUrl}" target="_blank" rel="noreferrer">Open official SPC discussion ↗</a></article>`;
         }).join("");
       }catch(error){container.innerHTML='<div class="empty-state">The regional MCD feed is temporarily unavailable. Use the official SPC link above for current discussions.</div>';}
     }
