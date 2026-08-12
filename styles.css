@@ -109,9 +109,10 @@ nav a:hover { color: var(--electric); }
 .founding-card img { width: 100%; border-radius: 8px; }
 .founding-label { display: flex; align-items: center; gap: 13px; margin: 2px 5px 16px; text-transform: uppercase; letter-spacing: .16em; font-size: 11px; font-weight: 800; color: var(--orange); }
 .founding-label i { height: 1px; background: #ded9cf; flex: 1; }
-.official-sponsor-card { display: block; max-width: 980px; margin: 0 auto 34px; background: white; padding: 18px; border-radius: 14px; box-shadow: 0 18px 50px rgba(7,24,33,.1); border: 1px solid #d9d5cb; transition: transform .2s, box-shadow .2s; }
+.official-sponsor-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; max-width: 1180px; margin: 0 auto 34px; }
+.official-sponsor-card { display: flex; flex-direction: column; min-width: 0; background: white; padding: 18px; border-radius: 14px; box-shadow: 0 18px 50px rgba(7,24,33,.1); border: 1px solid #d9d5cb; transition: transform .2s, box-shadow .2s; }
 .official-sponsor-card:hover { transform: translateY(-4px); box-shadow: 0 22px 55px rgba(7,24,33,.15); }
-.official-sponsor-card img { display: block; width: 100%; border-radius: 8px; }
+.official-sponsor-card img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 8px; }
 .official-sponsor-label { display: flex; align-items: center; gap: 13px; margin: 2px 5px 16px; text-transform: uppercase; letter-spacing: .16em; font-size: 11px; font-weight: 800; color: var(--orange); }
 .official-sponsor-label i { height: 1px; background: #ded9cf; flex: 1; }
 .official-sponsor-meta { padding: 17px 5px 2px; display: flex; justify-content: space-between; align-items: center; gap: 15px; }
@@ -178,3 +179,5 @@ footer p a { color: var(--electric); text-decoration: underline; }
   .partner-meta { align-items: flex-start; flex-direction: column; }
   .partner-meta span { text-align: left; }
 }
+
+@media (max-width: 760px) { .official-sponsor-grid { grid-template-columns: 1fr; } .official-sponsor-meta { align-items: flex-start; flex-direction: column; } }
