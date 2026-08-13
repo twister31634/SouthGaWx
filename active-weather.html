@@ -84,6 +84,10 @@
     .outlook-copy p { margin:0; color:#b8cbd1; font-size:13px; line-height:1.6; }
     .outlook-links { display:flex; flex-wrap:wrap; gap:8px; margin-top:18px; }
     .outlook-links a { padding:9px 11px; border:1px solid rgba(255,255,255,.18); border-radius:8px; color:#fff; font-size:11px; font-weight:900; text-transform:uppercase; }
+    .outlook-status { margin-top:14px; padding-top:13px; border-top:1px solid rgba(255,255,255,.11); color:#9eb3ba; font-size:11px; line-height:1.5; }
+    .outlook-status strong { display:inline; margin:0; color:#d9e7eb; font-size:11px; }
+    .outlook-retry { margin-top:10px; padding:9px 12px; border:1px solid rgba(114,217,255,.5); border-radius:8px; background:#12313e; color:#fff; font-size:10px; font-weight:900; letter-spacing:.07em; text-transform:uppercase; cursor:pointer; }
+    .outlook-retry:disabled { cursor:wait; opacity:.55; }
     .mcd-list { min-height:340px; padding:18px; display:grid; gap:10px; align-content:start; }
     .mcd-card { padding:15px 16px; border-left:4px solid #5ed4ff; background:#102c38; }
     .mcd-card strong { display:block; color:#fff; font-size:14px; }
@@ -138,7 +142,7 @@
           <div class="weather-panel-head"><h3>Regional outlooks</h3><a class="official-link" href="https://www.spc.noaa.gov/products/outlook/" target="_blank" rel="noreferrer">SPC outlooks ↗</a></div>
           <div class="outlook-preview">
             <figure><div class="regional-outlook-map-wrap"><div id="regional-outlook-map" aria-label="Current Day 1 SPC outlook over regional county map"></div><div class="outlook-map-legend" aria-label="SPC outlook categories"><span><i style="background:#c1e9c1"></i>TSTM</span><span><i style="background:#66a366"></i>MRGL</span><span><i style="background:#ffe066"></i>SLGT</span><span><i style="background:#ffa366"></i>ENH</span><span><i style="background:#e06666"></i>MDT</span><span><i style="background:#ff66ff"></i>HIGH</span></div></div></figure>
-            <div class="outlook-copy"><strong>South Georgia and nearby region</strong><p>Use the official outlook to see whether organized severe weather is forecast within South Georgia, North Florida or Southeast Alabama. Outlook categories are not warnings.</p><div class="outlook-links"><a href="https://www.spc.noaa.gov/products/outlook/day1otlk.html" target="_blank" rel="noreferrer">Day 1</a><a href="https://www.spc.noaa.gov/products/outlook/day2otlk.html" target="_blank" rel="noreferrer">Day 2</a><a href="https://www.spc.noaa.gov/products/outlook/day3otlk.html" target="_blank" rel="noreferrer">Day 3</a></div></div>
+            <div class="outlook-copy"><strong>South Georgia and nearby region</strong><p>Use the official outlook to see whether organized severe weather is forecast within South Georgia, North Florida or Southeast Alabama. Outlook categories are not warnings.</p><div class="outlook-links"><a href="https://www.spc.noaa.gov/products/outlook/day1otlk.html" target="_blank" rel="noreferrer">Day 1</a><a href="https://www.spc.noaa.gov/products/outlook/day2otlk.html" target="_blank" rel="noreferrer">Day 2</a><a href="https://www.spc.noaa.gov/products/outlook/day3otlk.html" target="_blank" rel="noreferrer">Day 3</a></div><div class="outlook-status" aria-live="polite"><strong id="outlook-status">Loading current SPC outlook…</strong><br><span id="outlook-updated">Waiting for a successful update</span></div><button class="outlook-retry" id="outlook-retry" type="button">Retry outlook</button></div>
           </div>
         </article>
         <article class="weather-panel">
@@ -152,7 +156,7 @@
     <section class="weather-content" aria-labelledby="national-outlook-title">
       <div class="weather-heading"><div><p class="section-kicker">The national picture</p><h2 id="national-outlook-title">National severe weather outlook</h2></div><p>A simple nationwide view of the current Day 1 severe-thunderstorm outlook from the Storm Prediction Center.</p></div>
       <article class="weather-panel national-panel">
-        <div class="national-image"><img id="national-outlook-image" src="https://www.spc.noaa.gov/products/outlook/day1otlk.png" onerror="this.onerror=null;this.src='assets/weather/day1otlk.png'" alt="Current national SPC Day 1 convective outlook"></div>
+        <div class="national-image"><img id="national-outlook-image" src="https://www.spc.noaa.gov/products/outlook/day1otlk.png" alt="Current national SPC Day 1 convective outlook"></div>
         <div class="national-copy"><h3>Today’s SPC overview</h3><p>This map shows where organized severe thunderstorms may occur across the contiguous United States. It provides forecast context—not a storm track and not a warning.</p><a class="nav-cta" href="https://www.spc.noaa.gov/" target="_blank" rel="noreferrer">Open the official SPC page ↗</a></div>
       </article>
     </section>
@@ -232,22 +236,60 @@
         }}).addTo(countyGroup);
       }catch(error){console.warn("County boundaries could not load",error);}
     }
-    async function loadRegionalOutlookMap(){
-      const outlookMap=L.map("regional-outlook-map",{zoomControl:true,attributionControl:false,minZoom:5,maxZoom:9,maxBounds:L.latLngBounds([27,-88],[35,-78])});
-      outlookMap.fitBounds(REGION_BOUNDS,{padding:[5,5]});
-      const query=new URLSearchParams({where:"1=1",geometry:"-86.15,28.85,-80.55,33.15",geometryType:"esriGeometryEnvelope",inSR:"4326",spatialRel:"esriSpatialRelIntersects",outFields:"BASENAME,NAME,STATE",returnGeometry:"true",outSR:"4326",f:"geojson"});
+    const outlookMap=L.map("regional-outlook-map",{zoomControl:true,attributionControl:false,minZoom:5,maxZoom:9,maxBounds:L.latLngBounds([27,-88],[35,-78])});
+    outlookMap.fitBounds(REGION_BOUNDS,{padding:[5,5]});
+    const outlookLayerGroup=L.layerGroup().addTo(outlookMap),outlookCountyGroup=L.layerGroup().addTo(outlookMap);
+    const outlookStatus=document.getElementById("outlook-status"),outlookUpdated=document.getElementById("outlook-updated"),outlookRetry=document.getElementById("outlook-retry");
+    const outlookQuery=new URLSearchParams({where:"1=1",geometry:"-86.15,28.85,-80.55,33.15",geometryType:"esriGeometryEnvelope",inSR:"4326",spatialRel:"esriSpatialRelIntersects",outFields:"BASENAME,NAME,STATE",returnGeometry:"true",outSR:"4326",f:"geojson"});
+
+    async function fetchJsonAttempt(url,timeout=15000){
+      const response=await fetch(url,{cache:"no-store",signal:AbortSignal.timeout(timeout)});
+      if(!response.ok)throw new Error(`Feed returned ${response.status}`);
+      return response.json();
+    }
+    async function fetchCurrentOutlook(){
+      const liveUrl="https://www.spc.noaa.gov/products/outlook/day1otlk_cat.nolyr.geojson";
+      let lastError;
+      for(let attempt=1;attempt<=2;attempt++){
+        try{return{data:await fetchJsonAttempt(`${liveUrl}?t=${Date.now()}`,15000),source:"live"};}
+        catch(error){lastError=error;if(attempt<2)await new Promise(resolve=>setTimeout(resolve,1200));}
+      }
+      try{return{data:await fetchJsonAttempt(`assets/data/day1-outlook.geojson?t=${Date.now()}`,10000),source:"backup"};}
+      catch(error){throw lastError||error;}
+    }
+    async function loadOutlookCounties(){
       try{
-        const [counties,outlook]=await Promise.all([
-          fetchJsonWithFallback(`${COUNTY_QUERY_URL}?${query}`,"assets/data/regional-counties-simple.geojson","force-cache"),
-          fetchJsonWithFallback("https://www.spc.noaa.gov/products/outlook/day1otlk_cat.nolyr.geojson","assets/data/day1-outlook.geojson")
-        ]);
-        L.geoJSON(outlook,{style:feature=>({color:feature.properties?.stroke||"#52636b",weight:1.5,fillColor:feature.properties?.fill||"#c1e9c1",fillOpacity:.58}),onEachFeature:(feature,layer)=>layer.bindTooltip(feature.properties?.LABEL2||feature.properties?.LABEL||"SPC outlook")}).addTo(outlookMap);
+        const counties=await fetchJsonWithFallback(`${COUNTY_QUERY_URL}?${outlookQuery}`,"assets/data/regional-counties-simple.geojson","force-cache");
+        outlookCountyGroup.clearLayers();
         L.geoJSON(counties,{style:{color:"#1c2b32",weight:1.1,opacity:.82,fillOpacity:0},onEachFeature:(feature,layer)=>{
           const name=feature.properties?.BASENAME||feature.properties?.NAME;if(name)layer.bindTooltip(`${name} County`,{sticky:true,direction:"top"});
-        }}).addTo(outlookMap);
-      }catch(error){document.getElementById("regional-outlook-map").innerHTML='<div class="empty-state">Regional outlook map is temporarily unavailable.</div>';}
-      setTimeout(()=>outlookMap.invalidateSize(),100);
+        }}).addTo(outlookCountyGroup);
+      }catch(error){console.warn("Regional outlook county layer unavailable",error);}
     }
+    async function loadRegionalOutlookMap(){
+      outlookRetry.disabled=true;outlookStatus.textContent="Checking the current SPC outlook…";
+      try{
+        const result=await fetchCurrentOutlook();
+        outlookLayerGroup.clearLayers();
+        L.geoJSON(result.data,{style:feature=>({color:feature.properties?.stroke||"#52636b",weight:1.5,fillColor:feature.properties?.fill||"#c1e9c1",fillOpacity:.58}),onEachFeature:(feature,layer)=>layer.bindTooltip(feature.properties?.LABEL2||feature.properties?.LABEL||"SPC outlook")}).addTo(outlookLayerGroup);
+        const now=new Date().toLocaleString([],{weekday:"short",hour:"numeric",minute:"2-digit"});
+        outlookStatus.textContent=result.source==="live"?"Live SPC outlook loaded":"Saved SPC outlook loaded while the live feed is slow";
+        outlookUpdated.textContent=`Last successfully checked: ${now}`;
+      }catch(error){
+        outlookStatus.textContent="Outlook layer temporarily unavailable";
+        outlookUpdated.textContent="County boundaries remain available. Use the official SPC link or retry.";
+      }finally{outlookRetry.disabled=false;setTimeout(()=>outlookMap.invalidateSize(),100);}
+    }
+    outlookRetry.addEventListener("click",loadRegionalOutlookMap);
+
+    const nationalOutlookImage=document.getElementById("national-outlook-image");
+    let nationalOutlookAttempt=0;
+    nationalOutlookImage.addEventListener("error",()=>{
+      nationalOutlookAttempt++;
+      if(nationalOutlookAttempt===1)nationalOutlookImage.src=`https://www.spc.noaa.gov/products/outlook/day1otlk.png?t=${Date.now()}`;
+      else if(nationalOutlookAttempt===2)nationalOutlookImage.src=`assets/weather/day1otlk.png?t=${Date.now()}`;
+      else nationalOutlookImage.alt="National SPC outlook image is temporarily unavailable. Use the official SPC link.";
+    });
     function mcdExcerpt(text){
       const summary=text.match(/SUMMARY\.\.\.([\s\S]*?)(?:\n\s*DISCUSSION|\n\s*\.\.)/i)?.[1];
       return summary?summary.replace(/\s+/g," ").trim():"Open the official discussion for complete details and timing.";
@@ -307,7 +349,7 @@
     document.getElementById("warnings-toggle").addEventListener("change",event=>event.target.checked?warningGroup.addTo(map):map.removeLayer(warningGroup));
     document.getElementById("location-toggle").addEventListener("change",event=>event.target.checked?locationGroup.addTo(map):map.removeLayer(locationGroup));
     map.on("dragstart",()=>{document.getElementById("follow-toggle").checked=false;});
-    loadRadar();loadCounties();loadRegionalOutlookMap();loadWarnings();loadRegionalMCDs();loadChaseLink();setInterval(loadRadar,300000);setInterval(loadWarnings,60000);setInterval(loadRegionalMCDs,300000);setInterval(loadChaseLink,10000);
+    loadRadar();loadCounties();loadOutlookCounties();loadRegionalOutlookMap();loadWarnings();loadRegionalMCDs();loadChaseLink();setInterval(loadRadar,300000);setInterval(loadWarnings,60000);setInterval(loadRegionalOutlookMap,600000);setInterval(loadRegionalMCDs,300000);setInterval(loadChaseLink,10000);
   </script>
 </body>
 </html>
