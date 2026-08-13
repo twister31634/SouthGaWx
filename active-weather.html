@@ -71,15 +71,15 @@
     .weather-panel-head { display:flex; justify-content:space-between; gap:14px; align-items:center; padding:18px 20px; border-bottom:1px solid rgba(255,255,255,.11); }
     .weather-panel-head h3 { margin:0; font-size:18px; }
     .official-link { color:#72d9ff; font-size:11px; font-weight:900; letter-spacing:.07em; text-transform:uppercase; }
-    .outlook-preview { display:grid; grid-template-columns:minmax(0,1.25fr) minmax(190px,.75fr); min-height:340px; }
-    .outlook-preview figure { min-height:340px; margin:0; display:grid; place-items:center; background:#eef2f3; }
+    .outlook-preview { display:grid; grid-template-columns:minmax(0,1.7fr) minmax(180px,.7fr); min-height:440px; }
+    .outlook-preview figure { min-height:440px; margin:0; display:grid; place-items:center; background:#eef2f3; }
     .outlook-preview img { display:block; width:100%; height:100%; object-fit:contain; }
-    .regional-outlook-map-wrap { position:relative; width:100%; height:100%; min-height:340px; }
-    #regional-outlook-map { width:100%; height:100%; min-height:340px; background:#edf1f2; }
+    .regional-outlook-map-wrap { position:relative; width:100%; height:100%; min-height:440px; }
+    #regional-outlook-map { width:100%; height:100%; min-height:440px; background:#edf1f2; }
     .outlook-map-legend { position:absolute; z-index:700; left:8px; right:8px; bottom:8px; display:flex; flex-wrap:wrap; gap:4px; padding:6px; border-radius:7px; background:rgba(6,20,28,.88); }
     .outlook-map-legend span { display:flex; align-items:center; gap:4px; color:#fff; font-size:8px; font-weight:900; }
     .outlook-map-legend i { width:10px; height:10px; border:1px solid rgba(255,255,255,.7); }
-    .outlook-county-label { background:rgba(255,255,255,.82); border:0; border-radius:2px; box-shadow:none; color:#10232c; font-size:7px; font-weight:900; line-height:1; padding:1px 2px; white-space:nowrap; }
+    .outlook-county-label { background:transparent; border:0; border-radius:0; box-shadow:none; color:#10232c; font-size:8px; font-weight:900; line-height:1; padding:0; text-shadow:none; white-space:nowrap; }
     .outlook-county-label::before { display:none; }
     .outlook-copy { padding:24px; }
     .outlook-copy strong { display:block; margin-bottom:9px; color:#fff; font-size:18px; }
@@ -106,7 +106,7 @@
     .source-note { margin:12px 0 0; color:#80969d; font-size:11px; }
     .chase-marker { width:24px!important; height:24px!important; border:3px solid white; border-radius:50%; background:#f36c2d; box-shadow:0 0 0 7px rgba(243,108,45,.25),0 3px 12px rgba(0,0,0,.45); }
     @media(max-width:800px){
-      .active-main{padding-top:104px}.active-intro,.weather-heading{align-items:flex-start;flex-direction:column}.live-viewer-head{align-items:flex-start;flex-direction:column}.youtube-link{width:100%;justify-content:center}.status-strip,.regional-grid{grid-template-columns:1fr}.status-card{border-right:0;border-bottom:1px solid rgba(255,255,255,.12)}.status-card:last-child{border-bottom:0}.radar-shell{height:72vh;min-height:540px}.layer-panel{top:12px;right:12px;width:180px}.warning-legend{left:12px;right:205px;top:12px}.radar-controls{left:12px;right:12px;bottom:12px;grid-template-columns:auto 1fr}.time-readout{grid-column:1/-1;text-align:center}.active-disclaimer{flex-direction:column}.active-disclaimer strong{white-space:normal}.outlook-preview,.national-panel{grid-template-columns:1fr}.outlook-preview figure{min-height:280px}.national-image{min-height:300px}
+      .active-main{padding-top:104px}.active-intro,.weather-heading{align-items:flex-start;flex-direction:column}.live-viewer-head{align-items:flex-start;flex-direction:column}.youtube-link{width:100%;justify-content:center}.status-strip,.regional-grid{grid-template-columns:1fr}.status-card{border-right:0;border-bottom:1px solid rgba(255,255,255,.12)}.status-card:last-child{border-bottom:0}.radar-shell{height:72vh;min-height:540px}.layer-panel{top:12px;right:12px;width:180px}.warning-legend{left:12px;right:205px;top:12px}.radar-controls{left:12px;right:12px;bottom:12px;grid-template-columns:auto 1fr}.time-readout{grid-column:1/-1;text-align:center}.active-disclaimer{flex-direction:column}.active-disclaimer strong{white-space:normal}.outlook-preview,.national-panel{grid-template-columns:1fr}.outlook-preview figure,.regional-outlook-map-wrap,#regional-outlook-map{min-height:360px}.national-image{min-height:300px}
     }
   </style>
 </head>
