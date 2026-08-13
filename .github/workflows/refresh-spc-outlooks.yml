@@ -1,0 +1,55 @@
+name: Refresh SPC outlook backups
+
+on:
+  schedule:
+    - cron: "17,47 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-spc-outlook-backups
+  cancel-in-progress: true
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out website
+        uses: actions/checkout@v4
+
+      - name: Download and validate current SPC outlooks
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p assets/data assets/weather
+          curl --fail --location --retry 3 --retry-all-errors --connect-timeout 15 --max-time 60             "https://www.spc.noaa.gov/products/outlook/day1otlk_cat.nolyr.geojson"             --output /tmp/day1-outlook.geojson
+          curl --fail --location --retry 3 --retry-all-errors --connect-timeout 15 --max-time 60             "https://www.spc.noaa.gov/products/outlook/day1otlk.png"             --output /tmp/day1otlk.png
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          geojson = json.loads(Path("/tmp/day1-outlook.geojson").read_text())
+          if geojson.get("type") != "FeatureCollection" or not isinstance(geojson.get("features"), list):
+              raise SystemExit("SPC GeoJSON validation failed")
+
+          png = Path("/tmp/day1otlk.png").read_bytes()
+          if not png.startswith(b"\x89PNG\r\n\x1a\n") or len(png) < 10000:
+              raise SystemExit("SPC PNG validation failed")
+          PY
+          mv /tmp/day1-outlook.geojson assets/data/day1-outlook.geojson
+          mv /tmp/day1otlk.png assets/weather/day1otlk.png
+
+      - name: Commit updated backups
+        shell: bash
+        run: |
+          if git diff --quiet -- assets/data/day1-outlook.geojson assets/weather/day1otlk.png; then
+            echo "SPC backups are already current."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- assets/data/day1-outlook.geojson assets/weather/day1otlk.png
+          git commit -m "Refresh SPC outlook backups"
+          git push
