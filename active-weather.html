@@ -232,7 +232,7 @@
     async function loadCounties(){
       const query=new URLSearchParams({where:"1=1",geometry:"-86.15,28.85,-80.55,33.15",geometryType:"esriGeometryEnvelope",inSR:"4326",spatialRel:"esriSpatialRelIntersects",outFields:"BASENAME,NAME,STATE",returnGeometry:"true",outSR:"4326",f:"geojson"});
       try{
-        const data=await fetchJsonWithFallback(`${COUNTY_QUERY_URL}?${query}`,"assets/data/regional-counties-simple.geojson","force-cache");countyGroup.clearLayers();
+        const data=await fetchJsonWithFallback("assets/data/regional-counties-simple.geojson","assets/data/regional-counties-simple.geojson","force-cache");countyGroup.clearLayers();
         L.geoJSON(data,{pane:"countiesPane",style:{color:"rgba(255,255,255,.78)",weight:1.15,opacity:.9,fillOpacity:0},onEachFeature:(feature,layer)=>{
           const name=feature.properties?.BASENAME||feature.properties?.NAME;if(name)layer.bindTooltip(`${name} County`,{sticky:true,direction:"top"});
         }}).addTo(countyGroup);
@@ -263,7 +263,7 @@
     }
     async function loadOutlookCounties(){
       try{
-        const counties=await fetchJsonWithFallback(`${COUNTY_QUERY_URL}?${outlookQuery}`,"assets/data/regional-counties-simple.geojson","force-cache");
+        const counties=await fetchJsonWithFallback("assets/data/regional-counties-simple.geojson","assets/data/regional-counties-simple.geojson","force-cache");
         outlookCountyGroup.clearLayers();
         L.geoJSON(counties,{pane:"outlookCountyPane",style:{color:"#172830",weight:1.25,opacity:1,fillOpacity:0},onEachFeature:(feature,layer)=>{
           const name=feature.properties?.BASENAME||feature.properties?.NAME;if(name)layer.bindTooltip(name,{permanent:true,direction:"center",className:"outlook-county-label",opacity:.92});
