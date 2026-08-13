@@ -280,6 +280,17 @@
         outlookUpdated.textContent="County boundaries remain available. Use the official SPC link or retry.";
       }finally{outlookRetry.disabled=false;setTimeout(()=>outlookMap.invalidateSize(),100);}
     }
+    function scheduleNextOutlookRefresh(){
+      const now=Date.now(),scheduledUtc=[[1,8],[6,8],[13,8],[16,38],[20,8]];
+      const candidates=[];
+      for(let dayOffset=0;dayOffset<=1;dayOffset++){
+        const date=new Date(now);date.setUTCDate(date.getUTCDate()+dayOffset);
+        scheduledUtc.forEach(([hour,minute])=>candidates.push(Date.UTC(date.getUTCFullYear(),date.getUTCMonth(),date.getUTCDate(),hour,minute)));
+      }
+      const next=candidates.find(time=>time>now)||now+21600000;
+      setTimeout(async()=>{await loadRegionalOutlookMap();scheduleNextOutlookRefresh();},next-now);
+      return new Date(next);
+    }
     outlookRetry.addEventListener("click",loadRegionalOutlookMap);
 
     const nationalOutlookImage=document.getElementById("national-outlook-image");
@@ -349,7 +360,7 @@
     document.getElementById("warnings-toggle").addEventListener("change",event=>event.target.checked?warningGroup.addTo(map):map.removeLayer(warningGroup));
     document.getElementById("location-toggle").addEventListener("change",event=>event.target.checked?locationGroup.addTo(map):map.removeLayer(locationGroup));
     map.on("dragstart",()=>{document.getElementById("follow-toggle").checked=false;});
-    loadRadar();loadCounties();loadOutlookCounties();loadRegionalOutlookMap();loadWarnings();loadRegionalMCDs();loadChaseLink();setInterval(loadRadar,300000);setInterval(loadWarnings,60000);setInterval(loadRegionalOutlookMap,600000);setInterval(loadRegionalMCDs,300000);setInterval(loadChaseLink,10000);
+    loadRadar();loadCounties();loadOutlookCounties();loadRegionalOutlookMap();scheduleNextOutlookRefresh();loadWarnings();loadRegionalMCDs();loadChaseLink();setInterval(loadRadar,300000);setInterval(loadWarnings,60000);setInterval(loadRegionalMCDs,300000);setInterval(loadChaseLink,10000);
   </script>
 </body>
 </html>
