@@ -79,6 +79,8 @@
     .outlook-map-legend { position:absolute; z-index:700; left:8px; right:8px; bottom:8px; display:flex; flex-wrap:wrap; gap:4px; padding:6px; border-radius:7px; background:rgba(6,20,28,.88); }
     .outlook-map-legend span { display:flex; align-items:center; gap:4px; color:#fff; font-size:8px; font-weight:900; }
     .outlook-map-legend i { width:10px; height:10px; border:1px solid rgba(255,255,255,.7); }
+    .outlook-county-label { background:rgba(255,255,255,.82); border:0; border-radius:2px; box-shadow:none; color:#10232c; font-size:7px; font-weight:900; line-height:1; padding:1px 2px; white-space:nowrap; }
+    .outlook-county-label::before { display:none; }
     .outlook-copy { padding:24px; }
     .outlook-copy strong { display:block; margin-bottom:9px; color:#fff; font-size:18px; }
     .outlook-copy p { margin:0; color:#b8cbd1; font-size:13px; line-height:1.6; }
@@ -237,6 +239,8 @@
       }catch(error){console.warn("County boundaries could not load",error);}
     }
     const outlookMap=L.map("regional-outlook-map",{zoomControl:true,attributionControl:false,minZoom:5,maxZoom:9,maxBounds:L.latLngBounds([27,-88],[35,-78])});
+    outlookMap.createPane("outlookRiskPane");outlookMap.getPane("outlookRiskPane").style.zIndex="410";
+    outlookMap.createPane("outlookCountyPane");outlookMap.getPane("outlookCountyPane").style.zIndex="430";outlookMap.getPane("outlookCountyPane").style.pointerEvents="none";
     outlookMap.fitBounds(REGION_BOUNDS,{padding:[5,5]});
     const outlookLayerGroup=L.layerGroup().addTo(outlookMap),outlookCountyGroup=L.layerGroup().addTo(outlookMap);
     const outlookStatus=document.getElementById("outlook-status"),outlookUpdated=document.getElementById("outlook-updated"),outlookRetry=document.getElementById("outlook-retry");
@@ -261,8 +265,8 @@
       try{
         const counties=await fetchJsonWithFallback(`${COUNTY_QUERY_URL}?${outlookQuery}`,"assets/data/regional-counties-simple.geojson","force-cache");
         outlookCountyGroup.clearLayers();
-        L.geoJSON(counties,{style:{color:"#1c2b32",weight:1.1,opacity:.82,fillOpacity:0},onEachFeature:(feature,layer)=>{
-          const name=feature.properties?.BASENAME||feature.properties?.NAME;if(name)layer.bindTooltip(`${name} County`,{sticky:true,direction:"top"});
+        L.geoJSON(counties,{pane:"outlookCountyPane",style:{color:"#172830",weight:1.25,opacity:1,fillOpacity:0},onEachFeature:(feature,layer)=>{
+          const name=feature.properties?.BASENAME||feature.properties?.NAME;if(name)layer.bindTooltip(name,{permanent:true,direction:"center",className:"outlook-county-label",opacity:.92});
         }}).addTo(outlookCountyGroup);
       }catch(error){console.warn("Regional outlook county layer unavailable",error);}
     }
@@ -271,7 +275,7 @@
       try{
         const result=await fetchCurrentOutlook();
         outlookLayerGroup.clearLayers();
-        L.geoJSON(result.data,{style:feature=>({color:feature.properties?.stroke||"#52636b",weight:1.5,fillColor:feature.properties?.fill||"#c1e9c1",fillOpacity:.58}),onEachFeature:(feature,layer)=>layer.bindTooltip(feature.properties?.LABEL2||feature.properties?.LABEL||"SPC outlook")}).addTo(outlookLayerGroup);
+        L.geoJSON(result.data,{pane:"outlookRiskPane",style:feature=>({color:feature.properties?.stroke||"#52636b",weight:1.5,fillColor:feature.properties?.fill||"#c1e9c1",fillOpacity:.48}),onEachFeature:(feature,layer)=>layer.bindTooltip(feature.properties?.LABEL2||feature.properties?.LABEL||"SPC outlook")}).addTo(outlookLayerGroup);
         const now=new Date().toLocaleString([],{weekday:"short",hour:"numeric",minute:"2-digit"});
         outlookStatus.textContent=result.source==="live"?"Live SPC outlook loaded":"Saved SPC outlook loaded while the live feed is slow";
         outlookUpdated.textContent=`Last successfully checked: ${now}`;
