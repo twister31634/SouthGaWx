@@ -72,6 +72,8 @@ nav a:hover { color: var(--electric); }
 .intro h2, .coverage h2, .partners h2, .sponsor h2 { margin: 0; font-size: clamp(38px, 4.2vw, 62px); line-height: 1.04; letter-spacing: -.045em; }
 .intro-copy { border-left: 3px solid var(--orange); padding-left: clamp(25px, 4vw, 50px); }
 .intro-copy p { margin: 0 0 20px; color: #394b53; font-size: 18px; line-height: 1.75; }
+.inline-link { display: inline-flex; margin-top: 6px; color: var(--blue); font-size: 12px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; border-bottom: 2px solid var(--orange); padding-bottom: 6px; }
+.inline-link:hover { color: var(--orange); }
 
 .coverage { position: relative; isolation: isolate; overflow: hidden; background: var(--navy); color: white; padding: 92px clamp(22px, 7vw, 108px); }
 .coverage::before { content: ""; position: absolute; inset: 0; z-index: 1; background: linear-gradient(90deg, rgba(5,24,34,.48), rgba(5,24,34,.26)); }
@@ -147,8 +149,42 @@ footer { padding: 34px clamp(22px, 5vw, 76px); background: #06141c; color: #91a7
 .footer-brand span { color: #91a7b0; }
 footer p { line-height: 1.5; }
 footer p a { color: var(--electric); text-decoration: underline; }
-.footer-social { display: flex; gap: 10px; }
+.footer-social { display: flex; flex-wrap: wrap; gap: 10px 16px; }
 .footer-social a { color: var(--electric); font-weight: 800; text-transform: uppercase; letter-spacing: .08em; }
+
+.about-main { background: var(--paper); }
+.about-hero { position: relative; isolation: isolate; overflow: hidden; min-height: 510px; padding: 92px clamp(22px, 7vw, 108px); display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(260px, .75fr); align-items: center; gap: clamp(42px, 8vw, 120px); color: white; background: linear-gradient(130deg, #06141c, #0b3547); }
+.about-hero::before { content: ""; position: absolute; inset: 0; z-index: -1; background: radial-gradient(circle at 82% 24%, rgba(85,198,232,.22), transparent 32%), linear-gradient(120deg, transparent 58%, rgba(239,108,47,.12)); }
+.about-hero h1 { margin: 0; max-width: 820px; font-size: clamp(48px, 6.3vw, 88px); line-height: .96; letter-spacing: -.055em; }
+.about-hero h1 em { color: var(--electric); font-style: normal; }
+.about-hero-copy > p:last-child { max-width: 720px; margin: 28px 0 0; color: #c7d9df; font-size: 19px; line-height: 1.68; }
+.about-portrait { justify-self: center; width: min(330px, 100%); }
+.about-portrait img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 50%; border: 1px solid rgba(85,198,232,.4); box-shadow: 0 0 80px rgba(85,198,232,.16); }
+.about-portrait p { margin: 20px 0 0; color: #8ad8ec; text-align: center; text-transform: uppercase; letter-spacing: .15em; font-size: 10px; font-weight: 800; }
+.about-story { padding: 96px clamp(22px, 7vw, 108px); display: grid; grid-template-columns: minmax(260px,.72fr) minmax(0,1.28fr); gap: clamp(44px, 8vw, 120px); }
+.about-story h2, .mission-section h2 { margin: 0; font-size: clamp(38px, 4.4vw, 64px); line-height: 1.02; letter-spacing: -.05em; }
+.about-story-copy { border-left: 3px solid var(--orange); padding-left: clamp(24px, 4vw, 50px); }
+.about-story-copy p { margin: 0 0 22px; color: #394b53; font-size: 18px; line-height: 1.76; }
+.experience-list { margin: 34px 0 0; padding: 0; display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; list-style: none; }
+.experience-list li { padding: 18px; border: 1px solid #d7dfe1; border-radius: 10px; background: white; }
+.experience-list strong { display: block; color: var(--orange); font-size: 25px; letter-spacing: -.03em; }
+.experience-list span { display: block; margin-top: 7px; color: var(--muted); font-size: 12px; line-height: 1.4; }
+.mission-section { padding: 96px clamp(22px, 7vw, 108px); color: white; background: var(--navy); }
+.mission-heading { display: grid; grid-template-columns: .85fr 1.15fr; gap: clamp(38px, 8vw, 120px); align-items: end; }
+.mission-heading > p { margin: 0; color: #c7d9df; font-size: 17px; line-height: 1.7; }
+.mission-grid { margin-top: 52px; display: grid; grid-template-columns: repeat(3,1fr); gap: 1px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.14); }
+.mission-grid article { padding: 34px; background: #0a3042; }
+.mission-grid b { color: var(--orange); font-size: 12px; letter-spacing: .16em; }
+.mission-grid h3 { margin: 32px 0 13px; font-size: 22px; }
+.mission-grid p { margin: 0; color: #c7d9df; line-height: 1.65; }
+.independence-section { padding: 96px clamp(22px, 7vw, 108px); display: grid; grid-template-columns: .9fr 1.1fr; gap: clamp(42px, 8vw, 120px); align-items: start; }
+.independence-section h2 { margin: 0; font-size: clamp(38px, 4.4vw, 64px); line-height: 1.03; letter-spacing: -.05em; }
+.independence-copy { padding: clamp(28px,4vw,46px); border-left: 4px solid var(--orange); background: var(--cream); }
+.independence-copy p { margin: 0 0 20px; color: #394b53; font-size: 17px; line-height: 1.72; }
+.independence-copy p:last-child { margin-bottom: 0; }
+.about-cta { padding: 78px clamp(22px,7vw,108px); display: flex; justify-content: space-between; align-items: center; gap: 34px; background: var(--orange); color: white; }
+.about-cta h2 { margin: 0; max-width: 780px; font-size: clamp(32px,4vw,56px); line-height: 1.04; letter-spacing: -.045em; }
+.about-cta .button { flex: 0 0 auto; background: white; color: var(--orange); }
 
 @media (max-width: 900px) {
   .hero { grid-template-columns: 1fr; padding-top: 62px; }
@@ -158,6 +194,10 @@ footer p a { color: var(--electric); text-decoration: underline; }
   .partner-grid { max-width: 600px; margin: 0 auto; }
   .warning-note { align-items: flex-start; flex-direction: column; }
   footer { grid-template-columns: 1fr; }
+  .about-hero, .about-story, .mission-heading, .independence-section { grid-template-columns: 1fr; }
+  .about-portrait { width: min(260px,70vw); }
+  .mission-grid { grid-template-columns: 1fr; }
+  .about-cta { align-items: flex-start; flex-direction: column; }
 }
 
 @media (max-width: 620px) {
@@ -178,6 +218,8 @@ footer p a { color: var(--electric); text-decoration: underline; }
   .coverage-grid h3 { margin-top: 28px; }
   .partner-meta { align-items: flex-start; flex-direction: column; }
   .partner-meta span { text-align: left; }
+  .about-hero, .about-story, .mission-section, .independence-section, .about-cta { padding-top: 70px; padding-bottom: 70px; }
+  .experience-list { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 760px) { .official-sponsor-grid { grid-template-columns: 1fr; } .official-sponsor-meta { align-items: flex-start; flex-direction: column; } }
